@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="sapjco">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/WebRoot/WEB-INF/lib/sapjco.jar!/" />
+      <root url="jar://$PROJECT_DIR$/WebRoot/WEB-INF/lib/sapjco3.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
