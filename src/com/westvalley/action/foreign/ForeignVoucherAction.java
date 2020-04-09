@@ -42,6 +42,10 @@ public class ForeignVoucherAction implements Action {
             String requestId = request.getRequestid();//请求ID
             Map<String, String> wfMainMap = DevUtil.getWFMainMapByReqID(requestId);
             log.d("requestId == ", requestId);
+            if (!StringUtils.isEmpty(wfMainMap.get("pzh"))) {
+                log.d("凭证已生成，无需继续生成:", requestId);
+                return "";
+            }
             String number = wfMainMap.get("liucbh");//行号
             parameter.put("ITEM", number);//行号
             parameter.put("BUKRS", wfMainMap.get("gsbm"));//公司代码
@@ -68,7 +72,7 @@ public class ForeignVoucherAction implements Action {
             log.d("hl === ", hl);
             UserService userService = new UserService();
             String userName = userService.getUserNameById(Integer.valueOf(wfMainMap.get("shenqr")));
-            String fksy = wfMainMap.get("fksy").length() > 5 ? wfMainMap.get("fksy").substring(0, 3) : wfMainMap.get("fksy");//付款事由
+            String fksy = wfMainMap.get("fksy").length() > 50 ? wfMainMap.get("fksy").substring(0, 50) : wfMainMap.get("fksy");//付款事由
             parameter.put("BKTXT", "付款：付_" + userName + "_" + fksy);//抬头文本
             List<Map<String, Object>> par = new ArrayList<>();
             List<Map<String, String>> wfMainMapList = DevUtil.getWFDetailByReqID(requestId, 3);//借方明细
@@ -121,7 +125,7 @@ public class ForeignVoucherAction implements Action {
                 map2.put("DMBTR", map.get("dfjecny"));//本币金额
                 map2.put("KOSTL", map.get("lrzx"));//成本中心
                 map2.put("RSTGR", map.get("xjl"));//现金流
-                map2.put("SGTXT", map.get("zy").length() > 30 ? map.get("zy").substring(0, 20) : map.get("zy"));//摘要
+                map2.put("SGTXT", map.get("zy").length() > 50 ? map.get("zy").substring(0, 50) : map.get("zy"));//摘要
                 map2.put("ZZ04", "");//员工
                 map2.put("ZZ02", map.get("gys"));//供应商
 

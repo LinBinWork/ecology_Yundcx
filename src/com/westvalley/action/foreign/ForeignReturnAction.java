@@ -155,7 +155,9 @@ public class ForeignReturnAction implements Action {
             String shenqr = wfMainMap.get("shenqr");//申请人
             BudgetService budgetService = new BudgetService();
             ResultDto resultDto = null;
-            if (isYXTZ) {
+            String sfhtfk = wfMainMap.get("sfhtfk");//是否合同付款
+//            if (budgetContractService.isContract(htlc)) {
+            if ("0".equals(sfhtfk)) {
                 //有合同付款
                 List<ContractDto> contractDtoList = new ArrayList<>();
                 for (Map<String, String> map : wfMainMapList) {
