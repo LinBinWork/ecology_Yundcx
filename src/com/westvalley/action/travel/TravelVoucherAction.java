@@ -38,6 +38,10 @@ public class TravelVoucherAction implements Action {
         Map<String, Object> parameter = new HashMap<>();
         String requestId = request.getRequestid();//请求ID
         Map<String, String> wfMainMap = DevUtil.getWFMainMapByReqID(requestId);
+        if (!StringUtils.isEmpty(wfMainMap.get("pzh"))) {
+            log.d("凭证已生成，无需继续生成:", requestId);
+            return "";
+        }
         log.d("requestId == ", requestId);
         String number = wfMainMap.get("liucbh");//行号
         parameter.put("ITEM", number);//行号
@@ -67,7 +71,7 @@ public class TravelVoucherAction implements Action {
             map2.put("DMBTR", map.get("jfje"));//本币金额
             map2.put("KOSTL", map.get("cbzx"));//成本中心
             map2.put("RSTGR", "");//现金流
-            map2.put("SGTXT", map.get("zy").length() > 30 ? map.get("zy").substring(0, 20) : map.get("zy"));//摘要
+            map2.put("SGTXT", map.get("zy").length() > 50 ? map.get("zy").substring(0, 50) : map.get("zy"));//摘要
             map2.put("ZZ04", map.get("ry"));//员工
             map2.put("ZZ02", "");//供应商
             map2.put("ZZ11", map.get("hsxm"));//项目号
@@ -92,7 +96,7 @@ public class TravelVoucherAction implements Action {
             map2.put("DMBTR", map.get("dfje"));//本币金额
             map2.put("KOSTL", "");//成本中心
             map2.put("RSTGR", map.get("xjl"));//现金流
-            map2.put("SGTXT", map.get("zy").length() > 30 ? map.get("zy").substring(0, 20) : map.get("zy"));//摘要
+            map2.put("SGTXT", map.get("zy").length() > 50 ? map.get("zy").substring(0, 50) : map.get("zy"));//摘要
             map2.put("ZZ04", map.get("ry"));//员工
             map2.put("ZZ02", "");//供应商
             map2.put("ZZ11", "");//项目号

@@ -123,7 +123,9 @@ public class ForeignApplyAction implements Action {
             BudgetService budgetService = new BudgetService();
             ResultDto resultDto = null;
             log.d("htlc == ", htlc);
-            if (budgetContractService.isContract(htlc)) {
+            String sfhtfk = wfMainMap.get("sfhtfk");//是否合同付款
+//            if (budgetContractService.isContract(htlc)) {
+            if ("0".equals(sfhtfk)) {
                 //有合同付款
                 List<ContractDto> contractDtoList = new ArrayList<>();
                 for (Map<String, String> map : wfMainMapList) {
