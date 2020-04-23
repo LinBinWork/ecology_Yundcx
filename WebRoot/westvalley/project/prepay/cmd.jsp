@@ -55,7 +55,8 @@
 
 			rs.executeQuery("select a.projExcustatus,a.projno,a.projname from uf_proj a where a.id = ? and a.projExcustatus = 0 ",Util.getIntValue(id));
 			if(rs.next()){
-				rs1.executeQuery("select g.glxm from formtable_main_35 g join workflow_requestbase wr on g.requestid = wr.requestid where wr.currentnodetype = 3 and g.glxm = ? ",id);
+//				rs1.executeQuery("select g.glxm from formtable_main_35 g join workflow_requestbase wr on g.requestid = wr.requestid where wr.currentnodetype = 3 and g.glxm = ? ",id);
+				rs1.executeQuery("select * from WV_V_ExistExecute where glxm = ? ",id);
 				if(rs1.next()){
 
 				}else{
