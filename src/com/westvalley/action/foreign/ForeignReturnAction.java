@@ -94,6 +94,8 @@ public class ForeignReturnAction implements Action {
                     if (!StringUtils.isEmpty(msg)) return msg;
                 }
             }
+
+            boolean isHx = false;
             String deleteSQL = "delete from WV_T_PaymentData where payid = ?";//删除原先的记录
             recordSetTrans.executeUpdate(deleteSQL, requestId);
             log.d("deleteSQL ==", deleteSQL);
@@ -149,36 +151,43 @@ public class ForeignReturnAction implements Action {
                         wfMainMap.get("pzh"),//冲销凭证号
                         "付款冲销"
                 );
+                isHx = true;
             }
             List<Map<String, String>> wfMainMapList = DevUtil.getWFDetailByReqID(requestId, 4);//项目信息分摊明细
             log.d("wfMainMapList ====== ", wfMainMapList);
             String shenqr = wfMainMap.get("shenqr");//申请人
             BudgetService budgetService = new BudgetService();
-            ResultDto resultDto = null;
+            ResultDto resultDto = ResultDto.ok();
             String sfhtfk = wfMainMap.get("sfhtfk");//是否合同付款
 //            if (budgetContractService.isContract(htlc)) {
-            if ("0".equals(sfhtfk)) {
+            if ("0".equals(sfhtfk) || "2".equals(sfhtfk)) {
                 //有合同付款
-                List<ContractDto> contractDtoList = new ArrayList<>();
-                for (Map<String, String> map : wfMainMapList) {
-                    if (!StringUtil.isEmpty(map.get("ftje")) && (Float.valueOf(map.get("ftje")) == 0 || Float.valueOf(map.get("ftje")) == 0.00)) {
-                        continue;
+                String bcsfje = wfMainMap.get("bcsfje");//本次实付金额
+                log.d("本次实付金额：", bcsfje);
+                //存在核销的情况，需要全部核销才可以提单，不是全部核销要求申请人提多一条流程
+                if (isHx && !"".equals(bcsfje) && Double.valueOf(bcsfje) > 0) return "存在核销的情况,需要全部核销,部分付款的情况请分开提单。";
+                //本次实付金额大于0才走合同预算扣减
+                if (!"".equals(bcsfje) && Double.valueOf(bcsfje) > 0) {
+                    List<ContractDto> contractDtoList = new ArrayList<>();
+                    for (Map<String, String> map : wfMainMapList) {
+                        if (!StringUtil.isEmpty(map.get("ftje")) && (Float.valueOf(map.get("ftje")) == 0 || Float.valueOf(map.get("ftje")) == 0.00)) {
+                            continue;
+                        }
+                        ProjEntity projEntity = budgetService.getProjInfo(Integer.valueOf(map.get("zxszxbh")), null);
+                        log.d("projEntity ====== ", projEntity);
+                        ContractDto contractDto = new ContractDto();
+                        contractDto.setRequestID(requestId);
+                        contractDto.setDetailID(map.get("id"));
+                        contractDto.setProjID(projEntity.getId());
+                        contractDto.setProjType(Integer.valueOf(projEntity.getProjType()));
+                        contractDto.setUseType(BudTypeEnum.CONTRACT_USED);
+                        contractDto.setCtrlLevel(projEntity.getCtrlLevel());//控制级别
+                        contractDto.setUseAmt(Double.valueOf(map.get("ftje")));
+                        contractDto.setCreUser(shenqr);
+                        contractDtoList.add(contractDto);
                     }
-                    ProjEntity projEntity = budgetService.getProjInfo(Integer.valueOf(map.get("zxszxbh")), null);
-                    log.d("projEntity ====== ", projEntity);
-                    ContractDto contractDto = new ContractDto();
-                    contractDto.setRequestID(requestId);
-                    contractDto.setDetailID(map.get("id"));
-                    contractDto.setProjID(projEntity.getId());
-                    contractDto.setProjType(Integer.valueOf(projEntity.getProjType()));
-                    contractDto.setUseType(BudTypeEnum.CONTRACT_USED);
-                    contractDto.setCtrlLevel(projEntity.getCtrlLevel());//控制级别
-                    contractDto.setUseAmt(Double.valueOf(map.get("ftje")));
-                    contractDto.setCreUser(shenqr);
-                    contractDtoList.add(contractDto);
+                    resultDto = budgetContractService.contractBudget(htlc, requestId, releaseAmt.doubleValue(), contractDtoList, BudTypeEnum.CONTRACT_USED);
                 }
-                resultDto = budgetContractService.contractBudget(htlc, requestId, releaseAmt.doubleValue(), contractDtoList, BudTypeEnum.CONTRACT_USED);
-
             } else {
                 //无合同付款
                 log.d("本次实付金额：", wfMainMap.get("bcsfje"));
