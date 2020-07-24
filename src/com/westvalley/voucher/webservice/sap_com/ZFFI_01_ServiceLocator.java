@@ -23,7 +23,6 @@ public class ZFFI_01_ServiceLocator extends org.apache.axis.client.Service imple
 
     // Use to get a proxy class for ZFFI_01
     private String ZFFI_01_address = "http://ERPDEV01.radio1964.com:8010/sap/bc/srt/rfc/sap/zffi_01/300/zffi_01/zffi_01";
-
     public String getZFFI_01Address() {
         return ZFFI_01_address;
     }
