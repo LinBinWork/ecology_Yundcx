@@ -21,6 +21,8 @@ public class Proj2Entity {
     private double projAmt;
     /**项目在途/冻结金额*/
     private double projFreezeAmt;
+    /**项目增加金额*/
+    private double projAddAmt;
     /**项目已使用金额*/
     private double projUsedAmt;
     /**项目剩余金额*/
@@ -196,6 +198,14 @@ public class Proj2Entity {
      */
     public void setProjUsedAmt(double projUsedAmt) {
         this.projUsedAmt = projUsedAmt;
+    }
+
+    public double getProjAddAmt() {
+        return projAddAmt;
+    }
+
+    public void setProjAddAmt(double projAddAmt) {
+        this.projAddAmt = projAddAmt;
     }
 
     /**

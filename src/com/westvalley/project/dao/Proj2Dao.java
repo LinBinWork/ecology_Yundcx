@@ -1,5 +1,6 @@
 package com.westvalley.project.dao;
 
+import com.sap.tc.logging.interfaces.IBaseLog;
 import com.westvalley.project.dto.Proj2Dto;
 import com.westvalley.project.dto.ResultDto;
 import com.westvalley.project.entity.Proj2Entity;
@@ -80,21 +81,16 @@ public class Proj2Dao {
             pe.setProjBalance(0);
         }
         if(pe != null){
-            //获取在途预算
-//            pe.setProjFreezeAmt(getProj2FreezeAmt(pe.getId(),requestID));
-//            //获取已使用预算
-//            pe.setProjUsedAmt(getProj2UsedAmt(pe.getId(),requestID));
+            double freezAmt = getFreezAmt(pe.getPID(), requestID);
+            double releaseAmt = getReleaseAmt(pe.getPID(), requestID);
+            double addAmt = getAddAmt(pe.getPID(), requestID);
+            double usedAmt = getUsedAmt(pe.getPID(), requestID);
+            double balance = pe.getProjAmt() + addAmt - usedAmt - releaseAmt;
+            pe.setProjBalance(balance);
+            pe.setProjUsedAmt(usedAmt);
+            pe.setProjFreezeAmt(freezAmt);
+            pe.setProjAddAmt(addAmt);
 
-            double decrease = getProj2AmtByType(pe.getId(), ExpTypeEnum.DECREASE, requestID);
-            double increase = getProj2AmtByType(pe.getId(), ExpTypeEnum.INCREASE, requestID);
-
-            BigDecimal total = new BigDecimal(String.valueOf(pe.getProjAmt()));
-            BigDecimal decreaseAmt = new BigDecimal(String.valueOf(decrease));//减少的金额  正数
-            BigDecimal increaseAmt = new BigDecimal(String.valueOf(increase));//增加的金额  负数
-            pe.setProjUsedAmt(decreaseAmt.add(increaseAmt).doubleValue());
-            BigDecimal balance = total.subtract(decreaseAmt).subtract(increaseAmt);
-            //获取剩余预算
-            pe.setProjBalance(balance.doubleValue());
         }
 
         return pe;
@@ -110,13 +106,111 @@ public class Proj2Dao {
         StringBuilder sb = new StringBuilder();
         sb.append(" select sum(p.useAmt) from wv_proj_excuDetail p  ");
         sb.append(" join workflow_requestbase wr on p.requestID = wr.requestid  ");
-        sb.append(" where p.projID = ?  and p.expType = ? and p.projtype = 2 and (wr.currentnodetype != 0 or p.useType = 9) ");
+        sb.append(" where p.projID = ?  and p.expType = ? and p.projtype = 2 and remark not in ('预算冻结-合同申请','预算冻结-合同归档待付款') and  (wr.currentnodetype != 0 or p.useType = 9) ");
         RecordSet rs = new RecordSet();
         if(StringUtil.isEmpty(requestID)){
             rs.executeQuery(sb.toString(),id,type.getType());
         }else{
             sb.append(" and (p.requestID != ? or p.useType = 9) ");
             rs.executeQuery(sb.toString(),id,type.getType(),requestID);
+        }
+        double projAmt = 0;
+        if(rs.next()){
+            projAmt = Util.getDoubleValue(rs.getString(1),0);
+        }
+        return projAmt;
+    }
+
+    /**
+     *  根据子项ID获取冻结金额
+     * @param id
+     * @param requestid
+     * @return
+     */
+    public double getFreezAmt(int id,String requestid){
+        StringBuilder sb = new StringBuilder();
+        sb.append(" select sum(p.useAmt) from wv_proj_excuDetail p  ");
+        sb.append(" join workflow_requestbase wr on p.requestID = wr.requestid  ");
+        sb.append(" where p.projID = ?  and p.expType = 1 and p.usetype  = 1 and p.projtype = 2  and  (wr.currentnodetype != 0 or p.useType = 9) ");
+        RecordSet rs = new RecordSet();
+        if(StringUtil.isEmpty(requestid)){
+            rs.executeQuery(sb.toString(),id);
+        }else{
+            sb.append(" and (p.requestID != ? or p.useType = 9) ");
+            rs.executeQuery(sb.toString(),id,requestid);
+        }
+        double projAmt = 0;
+        if(rs.next()){
+            projAmt = Util.getDoubleValue(rs.getString(1),0);
+        }
+        return projAmt;
+    }
+
+    /**
+     *  根据子项ID获取增加金额
+     * @param id
+     * @param requestid
+     * @return
+     */
+    public double getAddAmt(int id,String requestid){
+        StringBuilder sb = new StringBuilder();
+        sb.append(" select sum(p.useAmt) from wv_proj_excuDetail p  ");
+        sb.append(" join workflow_requestbase wr on p.requestID = wr.requestid  ");
+        sb.append(" where p.projID = ?  and p.usetype  in (3,6) and p.projtype = 2  and  (wr.currentnodetype != 0 or p.useType = 9) ");
+        RecordSet rs = new RecordSet();
+        if(StringUtil.isEmpty(requestid)){
+            rs.executeQuery(sb.toString(),id);
+        }else{
+            sb.append(" and (p.requestID != ? or p.useType = 9) ");
+            rs.executeQuery(sb.toString(),id,requestid);
+        }
+        double projAmt = 0;
+        if(rs.next()){
+            projAmt = Util.getDoubleValue(rs.getString(1),0);
+        }
+        return -projAmt;
+    }
+    /**
+     *  根据子项ID获取已使用金额
+     * @param id
+     * @param requestid
+     * @return
+     */
+    public double getUsedAmt(int id,String requestid){
+        StringBuilder sb = new StringBuilder();
+        sb.append(" select sum(p.useAmt) from wv_proj_excuDetail p  ");
+        sb.append(" join workflow_requestbase wr on p.requestID = wr.requestid  ");
+        sb.append(" where p.projID = ?  and p.usetype  in (0,8) and p.exptype = 1 and p.projtype = 2  and  (wr.currentnodetype != 0 or p.useType = 9) ");
+        RecordSet rs = new RecordSet();
+        if(StringUtil.isEmpty(requestid)){
+            rs.executeQuery(sb.toString(),id);
+        }else{
+            sb.append(" and (p.requestID != ? or p.useType = 9) ");
+            rs.executeQuery(sb.toString(),id,requestid);
+        }
+        double projAmt = 0;
+        if(rs.next()){
+            projAmt = Util.getDoubleValue(rs.getString(1),0);
+        }
+        return -projAmt;
+    }
+    /**
+     *  根据子项ID获取释放金额
+     * @param id
+     * @param requestid
+     * @return
+     */
+    public double getReleaseAmt(int id,String requestid){
+        StringBuilder sb = new StringBuilder();
+        sb.append(" select sum(p.useAmt) from wv_proj_excuDetail p  ");
+        sb.append(" join workflow_requestbase wr on p.requestID = wr.requestid  ");
+        sb.append(" where p.projID = ?  and p.usetype = 2 and p.exptype = 1 and p.projtype = 2  and  (wr.currentnodetype != 0 or p.useType = 9) ");
+        RecordSet rs = new RecordSet();
+        if(StringUtil.isEmpty(requestid)){
+            rs.executeQuery(sb.toString(),id);
+        }else{
+            sb.append(" and (p.requestID != ? or p.useType = 9) ");
+            rs.executeQuery(sb.toString(),id,requestid);
         }
         double projAmt = 0;
         if(rs.next()){
