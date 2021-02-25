@@ -13,8 +13,8 @@ public class SapFunction {
         return sapConn;
     }
 
-    public List<SapTable> getSapData(String functionName, Map<String,String> params , List<SapTable> tables){
-        List<SapTable> list = new ArrayList<>();
+    public Map<String,SapTable> getSapData(String functionName, Map<String,String> params , List<SapTable> tables){
+        Map<String,SapTable> tableMap = new HashMap<>();
         try {
             JCoDestination jCoDestination = SapConnUtils.connect(initSapConn());
             JCoFunction function = jCoDestination.getRepository().getFunction(functionName);
@@ -64,12 +64,12 @@ public class SapFunction {
                    data.add(map);
                }
                SapTable sapTable = new SapTable(tableName, data); //封装数据表
-               list.add(sapTable);
+              tableMap.put(tableName,sapTable);
            }
         }catch (Exception e){
             e.printStackTrace();
         }
-        return list;
+        return tableMap;
     }
 
     public List<String> getKeys(JCoTable jCoTable){
